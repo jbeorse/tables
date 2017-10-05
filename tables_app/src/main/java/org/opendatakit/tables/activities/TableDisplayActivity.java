@@ -537,24 +537,25 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   @Override
   public Integer getIndexOfSelectedItem() {
 
-    // TODO: Switch on whether we're in map or navigate mode
-    
-    // If we have a map list view created and visible, forward the request to that fragment
-    MapListViewFragment mlvFragment = (MapListViewFragment) this.getFragmentManager()
-        .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
-    if (mlvFragment != null && mlvFragment.isVisible()) {
-      return mlvFragment.getIndexOfSelectedItem();
+    switch (mCurrentFragmentType) {
+    case MAP:
+      MapListViewFragment mlvFragment = (MapListViewFragment) this.getFragmentManager()
+          .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+      if (mlvFragment != null && mlvFragment.isVisible()) {
+        return mlvFragment.getIndexOfSelectedItem();
+      }
+      break;
+    case NAVIGATE:
+      NavigateFragment navFragment = (NavigateFragment) this.getFragmentManager()
+          .findFragmentByTag(Constants.FragmentTags.NAVIGATE);
+      if (navFragment != null && navFragment.isVisible()) {
+        return navFragment.getIndexOfSelectedItem();
+      }
+      break;
+    default:
+      throw new IllegalStateException(TAG + ": Attempted to getIndexOfSelectedItem from unsupported"
+          + " fragment type: " + mCurrentFragmentType);
     }
-
-    // If there is no map list, check for a navigation fragment and try to forward to that fragment.
-    NavigateFragment navFragment = (NavigateFragment) this.getFragmentManager()
-        .findFragmentByTag(Constants.FragmentTags.NAVIGATE);
-    if (navFragment != null && navFragment.isVisible()) {
-      return mlvFragment.getIndexOfSelectedItem();
-    }
-
-    // TODO: This logic only works if there are NEVER a map list view and a navigate fragment at
-    // the same time. Is this a safe assumption in the long run?
 
     // no item selected
     return null;
@@ -1271,14 +1272,31 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   @Override
   public void onSetSelectedItemIndex(int i) {
     FragmentManager fragmentManager = getFragmentManager();
-    MapListViewFragment mapListViewFragment = (MapListViewFragment) fragmentManager
-        .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
 
-    if (mapListViewFragment == null) {
-      WebLogger.getLogger(getAppName())
-          .e(TAG, "[onSetIndex] mapListViewFragment is null! Returning");
-    } else {
-      mapListViewFragment.setIndexOfSelectedItem(i);
+    switch (mCurrentFragmentType) {
+    case MAP:
+      MapListViewFragment mapListViewFragment = (MapListViewFragment) fragmentManager
+          .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+      if (mapListViewFragment == null) {
+        WebLogger.getLogger(getAppName())
+            .e(TAG, "[onSetIndex] mapListViewFragment is null! Returning");
+      } else {
+        mapListViewFragment.setIndexOfSelectedItem(i);
+      }
+      break;
+    case NAVIGATE:
+      NavigateFragment navigateFragment = (NavigateFragment) fragmentManager
+          .findFragmentByTag(Constants.FragmentTags.NAVIGATE);
+      if (navigateFragment == null) {
+        WebLogger.getLogger(getAppName())
+            .e(TAG, "[onSetIndex] navigateFragment is null! Returning");
+      } else {
+        navigateFragment.setIndexOfSelectedItem(i);
+      }
+      break;
+    default:
+      throw new IllegalStateException(TAG + ": Attempted to onSetSelectedItemIndex from unsupported"
+          + " fragment type: " + mCurrentFragmentType);
     }
   }
 
@@ -1287,14 +1305,33 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    */
   public void setNoItemSelected() {
     FragmentManager fragmentManager = getFragmentManager();
-    MapListViewFragment mapListViewFragment = (MapListViewFragment) fragmentManager
-        .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
 
-    if (mapListViewFragment == null) {
-      WebLogger.getLogger(getAppName())
-          .e(TAG, "[setNoItemSelected] mapListViewFragment is null! Returning");
-    } else {
-      mapListViewFragment.setNoItemSelected();
+    switch (mCurrentFragmentType) {
+    case MAP:
+      MapListViewFragment mapListViewFragment = (MapListViewFragment) fragmentManager
+          .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
+
+      if (mapListViewFragment == null) {
+        WebLogger.getLogger(getAppName())
+            .e(TAG, "[setNoItemSelected] mapListViewFragment is null! Returning");
+      } else {
+        mapListViewFragment.setNoItemSelected();
+      }
+      break;
+    case NAVIGATE:
+      NavigateFragment navigateFragment = (NavigateFragment) fragmentManager
+          .findFragmentByTag(Constants.FragmentTags.NAVIGATE);
+
+      if (navigateFragment == null) {
+        WebLogger.getLogger(getAppName())
+            .e(TAG, "[setNoItemSelected] navigateFragment is null! Returning");
+      } else {
+        navigateFragment.setNoItemSelected();
+      }
+      break;
+    default:
+      throw new IllegalStateException(TAG + ": Attempted to setNoItemSelected from unsupported"
+          + " fragment type: " + mCurrentFragmentType);
     }
   }
 
@@ -1321,10 +1358,12 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL);
     Fragment detailWithListViewListFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
+    Fragment navigateFragment = fragmentManager
+        .findFragmentByTag(Constants.FragmentTags.NAVIGATE);
 
     for (Fragment f : new Fragment[] { spreadsheetFragment, listViewFragment, mapListViewFragment,
         innerMapFragment, detailViewFragment, detailWithListViewDetailFragment,
-        detailWithListViewListFragment }) {
+        detailWithListViewListFragment, navigateFragment }) {
       if (f != null) {
         if (fragmentTransaction == null) {
           fragmentTransaction = fragmentManager.beginTransaction();
