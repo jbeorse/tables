@@ -10,5 +10,6 @@
     <color name="footer_index">#CDC0B0</color>
     <color name="footer_data">#FAF0E6</color>
     <color name="cell_selected">#A0A0A0</color>
+    <color name="dark_blue">#536379</color>
 
 </resources>

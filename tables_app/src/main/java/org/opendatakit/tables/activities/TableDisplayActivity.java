@@ -32,6 +32,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import org.opendatakit.consts.IntentConsts;
@@ -552,9 +553,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         return navFragment.getIndexOfSelectedItem();
       }
       break;
-    default:
-      throw new IllegalStateException(TAG + ": Attempted to getIndexOfSelectedItem from unsupported"
-          + " fragment type: " + mCurrentFragmentType);
     }
 
     // no item selected
@@ -667,7 +665,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     switch (mCurrentFragmentType) {
     case SPREADSHEET:
     case LIST:
-    case NAVIGATE: // TODO: Add a Navigate that is similar to Map
+    case NAVIGATE:
     case MAP:
       /*
        * Disable or enable those menu items corresponding to view types that are
@@ -677,11 +675,14 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       MenuItem spreadsheetItem = menu.findItem(R.id.top_level_table_menu_view_spreadsheet_view);
       MenuItem listItem = menu.findItem(R.id.top_level_table_menu_view_list_view);
       MenuItem mapItem = menu.findItem(R.id.top_level_table_menu_view_map_view);
+      MenuItem navigateItem = menu.findItem(R.id.top_level_table_menu_view_navigate_view);
       spreadsheetItem.setEnabled(true); // always possible
       listItem.setEnabled(
           mPossibleTableViewTypes != null && mPossibleTableViewTypes.listViewIsPossible());
       mapItem.setEnabled(
           mPossibleTableViewTypes != null && mPossibleTableViewTypes.mapViewIsPossible());
+      navigateItem.setEnabled(
+          mPossibleTableViewTypes != null && mPossibleTableViewTypes.navigateViewIsPossible());
       // Set the checkbox highlight to the view type being displayed.
       switch (mCurrentFragmentType) {
       case SPREADSHEET:
@@ -693,6 +694,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       case MAP:
         mapItem.setChecked(true);
         break;
+      case NAVIGATE:
+        navigateItem.setChecked(true);
       default:
         break;
       }
@@ -738,6 +741,19 @@ public class TableDisplayActivity extends AbsBaseWebActivity
             null;
       }
       setCurrentFragmentType(ViewFragmentType.MAP, filename, null);
+      return true;
+    case R.id.top_level_table_menu_view_navigate_view:
+      // TODO: We currently don't actually need any file name for Navigate view. Can I just leave it
+      // an arbitrary value? Null?
+      if (mOriginalFragmentType != null && mOriginalFragmentType == ViewFragmentType.NAVIGATE) {
+        filename = mOriginalFileName;
+      }
+      if (filename == null) {
+        filename = mPossibleTableViewTypes != null ?
+            mPossibleTableViewTypes.getDefaultMapListViewFileName() :
+            null;
+      }
+      setCurrentFragmentType(ViewFragmentType.NAVIGATE, filename, null);
       return true;
     case R.id.top_level_table_menu_add:
       WebLogger.getLogger(getAppName()).d(TAG, "[onOptionsItemSelected] add selected");
@@ -1085,21 +1101,17 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       } else {
         fragmentTransaction.show(mapListViewFragment);
       }
-      if (innerMapFragment == null || createNew) {
-        if (innerMapFragment != null) {
-          // remove the old fragment
-          WebLogger.getLogger(getAppName())
-              .d(TAG, "[showMapFragment] removing old inner map fragment");
-          fragmentTransaction.remove(innerMapFragment);
-        }
-        innerMapFragment = new TableMapInnerFragment();
-        fragmentTransaction
-            .add(R.id.map_view_inner_map, innerMapFragment, Constants.FragmentTags.MAP_INNER_MAP);
-        ((TableMapInnerFragment) innerMapFragment).listener = this;
-      } else {
-        ((TableMapInnerFragment) innerMapFragment).listener = this;
-        fragmentTransaction.show(innerMapFragment);
+      // Always destroy and recreate inner map fragment
+      if (innerMapFragment != null) {
+        // remove the old fragment
+        WebLogger.getLogger(getAppName())
+            .d(TAG, "[showMapFragment] removing old inner map fragment");
+        fragmentTransaction.remove(innerMapFragment);
       }
+      innerMapFragment = new TableMapInnerFragment();
+      fragmentTransaction
+          .add(R.id.map_view_inner_map, innerMapFragment, Constants.FragmentTags.MAP_INNER_MAP);
+      ((TableMapInnerFragment) innerMapFragment).listener = this;
       break;
     case NAVIGATE:
       if (navigateFragment == null || createNew) {
@@ -1113,23 +1125,21 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         fragmentTransaction
             .add(R.id.navigate, navigateFragment, Constants.FragmentTags.NAVIGATE);
       } else {
-        fragmentTransaction.show(mapListViewFragment);
+        fragmentTransaction.show(navigateFragment);
       }
-      if (innerMapFragment == null || createNew) {
-        if (innerMapFragment != null) {
-          // remove the old fragment
-          WebLogger.getLogger(getAppName())
-              .d(TAG, "[showNavigateFragment] removing old inner map fragment");
-          fragmentTransaction.remove(innerMapFragment);
-        }
-        innerMapFragment = new TableMapInnerFragment();
-        fragmentTransaction
-            .add(R.id.map_view_inner_map, innerMapFragment, Constants.FragmentTags.MAP_INNER_MAP);
-        ((TableMapInnerFragment) innerMapFragment).listener = this;
-      } else {
-        ((TableMapInnerFragment) innerMapFragment).listener = this;
-        fragmentTransaction.show(innerMapFragment);
+      // Always destroy and recreate inner map fragment
+      if (innerMapFragment != null) {
+        // remove the old fragment
+        WebLogger.getLogger(getAppName())
+            .d(TAG, "[showNavigateFragment] removing old inner map fragment");
+        fragmentTransaction.remove(innerMapFragment);
       }
+      innerMapFragment = new TableMapInnerFragment();
+      fragmentTransaction
+          .add(R.id.navigate_view_inner_map, innerMapFragment, Constants.FragmentTags
+              .MAP_INNER_MAP);
+      ((TableMapInnerFragment) innerMapFragment).listener = this;
+
       break;
     }
     fragmentTransaction.commit();
@@ -1294,9 +1304,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         navigateFragment.setIndexOfSelectedItem(i);
       }
       break;
-    default:
-      throw new IllegalStateException(TAG + ": Attempted to onSetSelectedItemIndex from unsupported"
-          + " fragment type: " + mCurrentFragmentType);
     }
   }
 

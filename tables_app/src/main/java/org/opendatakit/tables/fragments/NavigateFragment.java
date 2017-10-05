@@ -35,10 +35,6 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks 
    */
   protected int mSelectedItemIndex = INVALID_INDEX;
 
-
-  // TODO: Delete this
-  TextView deleteThis;
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -49,10 +45,6 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks 
           INVALID_INDEX;
     }
 
-    // TODO: Delete this
-    deleteThis = new TextView(getActivity());
-    deleteThis.setText("Navigate View");
-    deleteThis.setVisibility(View.VISIBLE);
   }
 
   @Override

@@ -78,6 +78,7 @@
     <string name="error_while_changing_index_column">Error while changing index column</string>
     <string name="list">List</string>
     <string name="map">Map</string>
+    <string name="navigate">Navigate</string>
     <string name="preferred_view_type">Preferred View Type</string>
     <string name="sms_shortcut_name">Shortcut Name</string>
     <string name="sms_shortcut_input">Shortcut Input</string>
