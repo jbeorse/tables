@@ -449,7 +449,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     case SPREADSHEET:
     case DETAIL_WITH_LIST:
     case SUB_LIST:
-      return null; // TODO: For now there is no default detail with list. Do we need one?
+    case NAVIGATE:
+      return null;
     }
     return null;
   }
@@ -515,8 +516,6 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    */
   @Override
   public String getUrlBaseLocation(boolean ifChanged, String fragmentID) {
-    // TODO: do we need to track the ifChanged status?
-
     String filename;
     if (fragmentID != null && Constants.FragmentTags.DETAIL_WITH_LIST_LIST.equals(fragmentID)) {
       filename = mCurrentSubFileName;
@@ -530,18 +529,33 @@ public class TableDisplayActivity extends AbsBaseWebActivity
   }
 
   /**
-   * Forwards the request to the map list found via the fragment manager
+   * Forwards the request to the appropriate map listener found via the fragment manager
    *
    * @return the index of the currently selected item in the map list, or null if no item was
    * selected
    */
   @Override
   public Integer getIndexOfSelectedItem() {
+
+    // TODO: Switch on whether we're in map or navigate mode
+    
+    // If we have a map list view created and visible, forward the request to that fragment
     MapListViewFragment mlvFragment = (MapListViewFragment) this.getFragmentManager()
         .findFragmentByTag(Constants.FragmentTags.MAP_LIST);
     if (mlvFragment != null && mlvFragment.isVisible()) {
       return mlvFragment.getIndexOfSelectedItem();
     }
+
+    // If there is no map list, check for a navigation fragment and try to forward to that fragment.
+    NavigateFragment navFragment = (NavigateFragment) this.getFragmentManager()
+        .findFragmentByTag(Constants.FragmentTags.NAVIGATE);
+    if (navFragment != null && navFragment.isVisible()) {
+      return mlvFragment.getIndexOfSelectedItem();
+    }
+
+    // TODO: This logic only works if there are NEVER a map list view and a navigate fragment at
+    // the same time. Is this a safe assumption in the long run?
+
     // no item selected
     return null;
   }
@@ -558,7 +572,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         || mCurrentFragmentType == ViewFragmentType.DETAIL_WITH_LIST) {
       return IntentUtil.retrieveRowIdFromBundle(getIntentExtras());
     }
-    // map views are not considered to have a specific instanceId.
+    // map views (including navigate) are not considered to have a specific instanceId.
     // While one of the items happens to be distinguished, the view
     // is still a list of items.
     return null;
@@ -577,7 +591,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
 
   /**
    * Gets the webkit object out of the fragment if we're in a list, map, detail or detail with
-   * list/sublist fragment, but not if we're in a spreadsheet fragment
+   * list/sublist fragment, but not if we're in a spreadsheet or navigate fragment
    *
    * @param viewID used to determine which webkit object to get if we're in a list with
    *               detail/sublist view
@@ -590,6 +604,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     FragmentManager fragmentManager = this.getFragmentManager();
     switch (mCurrentFragmentType) {
     case SPREADSHEET:
+    case NAVIGATE:
       // this isn't a webkit
       return null;
     case LIST:
@@ -651,6 +666,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     switch (mCurrentFragmentType) {
     case SPREADSHEET:
     case LIST:
+    case NAVIGATE: // TODO: Add a Navigate that is similar to Map
     case MAP:
       /*
        * Disable or enable those menu items corresponding to view types that are
@@ -937,6 +953,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
         .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_DETAIL);
     Fragment detailWithListViewListFragment = fragmentManager
         .findFragmentByTag(Constants.FragmentTags.DETAIL_WITH_LIST_LIST);
+    Fragment navigateFragment = fragmentManager
+        .findFragmentByTag(Constants.FragmentTags.NAVIGATE);
 
     // Hide all fragments other than the current fragment type...
     if (mCurrentFragmentType != ViewFragmentType.SPREADSHEET && spreadsheetFragment != null) {
@@ -960,6 +978,15 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       if (mapListViewFragment != null) {
         fragmentTransaction.hide(mapListViewFragment);
       }
+
+    }
+    if (mCurrentFragmentType != ViewFragmentType.NAVIGATE) {
+      if (navigateFragment != null) {
+        fragmentTransaction.hide(navigateFragment);
+      }
+    }
+    if (mCurrentFragmentType != ViewFragmentType.NAVIGATE &&
+        mCurrentFragmentType != ViewFragmentType.MAP) {
       if (innerMapFragment != null) {
         fragmentTransaction.hide(innerMapFragment);
       }
@@ -1062,6 +1089,36 @@ public class TableDisplayActivity extends AbsBaseWebActivity
           // remove the old fragment
           WebLogger.getLogger(getAppName())
               .d(TAG, "[showMapFragment] removing old inner map fragment");
+          fragmentTransaction.remove(innerMapFragment);
+        }
+        innerMapFragment = new TableMapInnerFragment();
+        fragmentTransaction
+            .add(R.id.map_view_inner_map, innerMapFragment, Constants.FragmentTags.MAP_INNER_MAP);
+        ((TableMapInnerFragment) innerMapFragment).listener = this;
+      } else {
+        ((TableMapInnerFragment) innerMapFragment).listener = this;
+        fragmentTransaction.show(innerMapFragment);
+      }
+      break;
+    case NAVIGATE:
+      if (navigateFragment == null || createNew) {
+        if (navigateFragment != null) {
+          // remove the old fragment
+          WebLogger.getLogger(getAppName())
+              .d(TAG, "[showNavigateFragment] removing old navigate fragment");
+          fragmentTransaction.remove(mapListViewFragment);
+        }
+        navigateFragment = new NavigateFragment();
+        fragmentTransaction
+            .add(R.id.navigate, navigateFragment, Constants.FragmentTags.NAVIGATE);
+      } else {
+        fragmentTransaction.show(mapListViewFragment);
+      }
+      if (innerMapFragment == null || createNew) {
+        if (innerMapFragment != null) {
+          // remove the old fragment
+          WebLogger.getLogger(getAppName())
+              .d(TAG, "[showNavigateFragment] removing old inner map fragment");
           fragmentTransaction.remove(innerMapFragment);
         }
         innerMapFragment = new TableMapInnerFragment();
@@ -1185,7 +1242,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     View onePaneContent = findViewById(R.id.activity_table_display_activity_one_pane_content);
     View splitContent = findViewById(R.id.activity_table_display_activity_split_content);
     View mapContent = findViewById(R.id.activity_table_display_activity_map_content);
-    for (View v : new View[] { onePaneContent, splitContent, mapContent }) {
+    View navigateContent = findViewById(R.id.activity_table_display_activity_navigate_content);
+    for (View v : new View[] { onePaneContent, splitContent, mapContent, navigateContent }) {
       v.setVisibility(View.GONE);
     }
     switch (viewFragmentType) {
@@ -1200,6 +1258,9 @@ public class TableDisplayActivity extends AbsBaseWebActivity
       break;
     case MAP:
       mapContent.setVisibility(View.VISIBLE);
+      break;
+    case NAVIGATE:
+      navigateContent.setVisibility(View.VISIBLE);
       break;
     }
   }
