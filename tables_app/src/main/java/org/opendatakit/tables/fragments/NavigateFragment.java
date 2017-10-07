@@ -8,18 +8,30 @@ import android.location.LocationProvider;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.*;
 import com.todddavies.components.progressbar.ProgressWheel;
 import org.opendatakit.activities.IOdkDataActivity;
+import org.opendatakit.data.utilities.TableUtil;
+import org.opendatakit.database.data.ColumnDefinition;
+import org.opendatakit.database.data.OrderedColumns;
+import org.opendatakit.database.data.Row;
+import org.opendatakit.database.data.UserTable;
+import org.opendatakit.database.service.DbHandle;
+import org.opendatakit.database.service.UserDbInterface;
+import org.opendatakit.exception.ServicesAvailabilityException;
+import org.opendatakit.logging.WebLogger;
 import org.opendatakit.tables.R;
+import org.opendatakit.tables.activities.TableDisplayActivity;
+import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.providers.GeoProvider;
 import org.opendatakit.tables.utils.DistanceUtil;
+import org.opendatakit.tables.views.CellInfo;
 import org.opendatakit.tables.views.CompassView;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Fragment displaying the navigate module
@@ -68,6 +80,9 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   private CompassView mCompass;
   private CompassView mCensusLocation;
 
+  private UserTable mTable;
+  private ColumnDefinition mLatitudeColumn;
+  private ColumnDefinition mLongitudeColumn;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -91,6 +106,21 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
     mHeadingTextView = (TextView) getActivity().findViewById(R.id.headingTextView);
     mDistanceTextView = (TextView) getActivity().findViewById(R.id.distanceTextView);
 
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+    mTable = activity.getUserTable();
+    OrderedColumns orderedDefns = activity.getColumnDefinitions();
+
+    UserDbInterface dbInterface = Tables.getInstance().getDatabase();
+
+    try {
+      DbHandle db = dbInterface.openDatabase(activity.getAppName());
+
+      mLatitudeColumn = orderedDefns.find(getLatitudeElementKey(db));
+      mLongitudeColumn = orderedDefns.find(getLongitudeElementKey(db));
+    } catch (ServicesAvailabilityException e) {
+      WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
+      WebLogger.getLogger(activity.getAppName()).e(TAG, "Unable to access database");
+    }
   }
 
   @Override
@@ -216,27 +246,6 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
     }
   }
 
-  private void itemSelected(int position) {
-    // TODO: Update to navigate to new location
-
-    /*
-    Location censusLocation = new Location(instanceId);
-    censusLocation.setAccuracy((float) census.getAccuracy());
-    censusLocation.setAltitude(census.getAltitude());
-    censusLocation.setLatitude(census.getLatitude());
-    censusLocation.setLongitude(census.getLongitude());
-
-    mGeoProvider.setDestinationLocation(censusLocation);
-    ((CensusListAdapter) getListAdapter()).notifyDataSetChanged();
-    if (mDirectionProvider.getCurrentLocation() != null) {
-      updateDistance(mDirectionProvider.getCurrentLocation());
-    } else {
-      mDistanceTextView.setText(getActivity().getString(
-          R.string.distance, "-"));
-    }
-    */
-  }
-
   private void updateDistance(Location location) {
     if (mGeoProvider.getDestinationLocation() != null) {
       double distance = DistanceUtil.getDistance(mGeoProvider
@@ -273,9 +282,9 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   private void setSpinnerColor(SignalState signal) {
     Activity activity = getActivity();
 
-    int textColor = 0;
-    int barColor = 0;
-    int rimColor = 0;// circle border color
+    int textColor;
+    int barColor;
+    int rimColor;// circle border color
 
     switch (signal) {
     case GOOD_SIGNAL:
@@ -326,23 +335,31 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
    */
   void resetView() {
 
-    // TODO: Update what we are navigating to
-
-    // do not initiate reload until we have the database set up...
-    Activity activity = getActivity();
-    if (activity instanceof IOdkDataActivity) {
-      if (((IOdkDataActivity) activity).getDatabase() == null) {
-        return;
-      }
-    } else {
-      Log.e(TAG,
-          "Problem: NavigateView not being rendered from activity that is an " +
-              "IOdkDataActivity");
+    if (mSelectedItemIndex == INVALID_INDEX) {
+      mGeoProvider.setDestinationLocation(null);
+      mDistanceTextView.setText(getActivity().getString(
+          R.string.distance, "-"));
       return;
     }
 
-    if (getView() == null)
-      return; // Can't do anything
+    Row selectedRow = mTable.getRowAtIndex(mSelectedItemIndex);
+    String lat = selectedRow.getDataByKey(mLatitudeColumn.getElementKey());
+    String lon = selectedRow.getDataByKey(mLongitudeColumn.getElementKey());
+
+    Location destination = new Location(""); // TODO: Do we need a provider?
+    destination.setLatitude(Double.parseDouble(lat));
+    destination.setLongitude(Double.parseDouble(lon));
+
+    //destination.setAccuracy((float) census.getAccuracy());
+    //destination.setAltitude(census.getAltitude()); // TODO: Do we need/have altitude and accuracy?
+
+    mGeoProvider.setDestinationLocation(destination);
+    if (mGeoProvider.getCurrentLocation() != null) {
+      updateDistance(mGeoProvider.getCurrentLocation());
+    } else {
+      mDistanceTextView.setText(getActivity().getString(
+          R.string.distance, "-"));
+    }
   }
 
   /**
@@ -375,6 +392,23 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
     // TODO: Return which row ID we navigated to
+  }
+
+  private String getLatitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+
+    OrderedColumns orderedDefns = activity.getColumnDefinitions();
+    return TableUtil.get()
+        .getMapListViewLatitudeElementKey(Tables.getInstance().getDatabase(),
+            activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
+  }
+
+  private String getLongitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
+    TableDisplayActivity activity = (TableDisplayActivity) getActivity();
+    OrderedColumns orderedDefns = activity.getColumnDefinitions();
+    return TableUtil.get()
+        .getMapListViewLongitudeElementKey(Tables.getInstance().getDatabase(),
+            activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
   }
 
 }
