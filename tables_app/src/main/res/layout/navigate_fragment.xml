@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="fill_parent"
               android:layout_height="fill_parent"
+              xmlns:ProgressWheel="http://schemas.android.com/apk/res-auto"
               android:orientation="vertical">
 
     <RelativeLayout
@@ -26,7 +27,7 @@
                 android:src="@drawable/compass" />
 
         <org.opendatakit.tables.views.CompassView
-                android:id="@+id/censusLocation"
+                android:id="@+id/destination"
                 android:layout_width="@dimen/compass_width"
                 android:layout_height="@dimen/compass_height"
                 android:src="@drawable/census_bearing"
@@ -53,30 +54,6 @@
                 android:textSize="@dimen/nav_text_size"
                 android:textStyle="bold" />
 
-        <TextView
-                android:id="@+id/finalizedTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/dark_blue"
-                android:textSize="@dimen/nav_text_size_small"
-                android:textStyle="bold" />
-        <TextView
-                android:id="@+id/incompleteTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textColor="@color/dark_blue"
-                android:textSize="@dimen/nav_text_size_small"
-                android:textStyle="bold" />
-        <TextView
-                android:id="@+id/notStartedTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textColor="@color/dark_blue"
-                android:textSize="@dimen/nav_text_size_small"
-                android:textStyle="bold" />
     </LinearLayout>
         <RelativeLayout
                 android:id="@+id/gpsContainer"
@@ -86,27 +63,27 @@
                 android:layout_marginTop="10dp"
                 android:layout_toRightOf="@id/compassContainer" >
 
-            <!--
+
             <com.todddavies.components.progressbar.ProgressWheel
                     android:id="@+id/signalQualitySpinner"
                     android:layout_width="@dimen/small_signal_quality_progress_wheel_width"
                     android:layout_height="@dimen/small_signal_quality_progress_wheel_height"
-                    ProgressWheel:barColor="#2E9121"
-                    ProgressWheel:barLen="@dimen/small_signal_quality_progress_wheel_bar_length"
-                    ProgressWheel:barWidth="@dimen/small_signal_quality_progress_wheel_bar_width"
-                    ProgressWheel:rimColor="#332E9121"
-                    ProgressWheel:rimWidth="1dp"
-                    ProgressWheel:text="@string/acc_value"
-                    ProgressWheel:textColor="#2E9121"
-                    ProgressWheel:textSize="@dimen/small_signal_quality_progress_wheel_text_size" />
--->
+                    ProgressWheel:pwBarColor="@color/progress_wheel_bar"
+                    ProgressWheel:pwBarLength="@dimen/small_signal_quality_progress_wheel_bar_length"
+                    ProgressWheel:pwBarWidth="@dimen/small_signal_quality_progress_wheel_bar_width"
+                    ProgressWheel:pwRimColor="@color/progress_wheel_rim"
+                    ProgressWheel:pwRimWidth="@dimen/progress_wheel_rim_width"
+                    ProgressWheel:pwText="@string/acc_value"
+                    ProgressWheel:pwTextColor="@color/progress_wheel_text"
+                    ProgressWheel:pwTextSize="@dimen/small_signal_quality_progress_wheel_text_size" />
+
             <LinearLayout
                     android:id="@+id/directionContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
+                    android:layout_toRightOf="@id/signalQualitySpinner"
                     android:orientation="vertical" >
-                <!--android:layout_toRightOf="@id/signalQualitySpinner" -->
 
                 <TextView
                         android:id="@+id/headingTextView"

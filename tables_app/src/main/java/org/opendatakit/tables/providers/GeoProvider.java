@@ -1,14 +1,21 @@
 package org.opendatakit.tables.providers;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.*;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v13.app.ActivityCompat;
 import android.view.Surface;
+import org.opendatakit.tables.R;
 import org.opendatakit.tables.logic.AverageAngle;
+import org.opendatakit.utilities.RuntimePermissionUtils;
 
 /**
  * @author belendia@gmail.com
@@ -16,6 +23,11 @@ import org.opendatakit.tables.logic.AverageAngle;
 
 public class GeoProvider implements SensorEventListener, LocationListener {
   public static final String TAG = GeoProvider.class.getSimpleName();
+
+  /**
+   * Request code for requesting location permission
+   */
+  private static final int LOCATION_PERM_REQ_CODE = 0;
 
   /**
    * Interface definition for a callback to be invoked when the bearing
@@ -163,6 +175,7 @@ public class GeoProvider implements SensorEventListener, LocationListener {
       if (LocationManager.GPS_PROVIDER.equals(provider)
           || LocationManager.NETWORK_PROVIDER.equals(provider)) {
         if (mLocation == null) {
+          // TODO: Add lint exception for this, and also check for permission in Navigate fragment
           mLocation = mLocationManager.getLastKnownLocation(provider);
         }
 
