@@ -1,21 +1,14 @@
 package org.opendatakit.tables.providers;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.hardware.*;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v13.app.ActivityCompat;
 import android.view.Surface;
-import org.opendatakit.tables.R;
 import org.opendatakit.tables.logic.AverageAngle;
-import org.opendatakit.utilities.RuntimePermissionUtils;
 
 /**
  * @author belendia@gmail.com
@@ -25,18 +18,12 @@ public class GeoProvider implements SensorEventListener, LocationListener {
   public static final String TAG = GeoProvider.class.getSimpleName();
 
   /**
-   * Request code for requesting location permission
-   */
-  private static final int LOCATION_PERM_REQ_CODE = 0;
-
-  /**
    * Interface definition for a callback to be invoked when the bearing
    * changes.
    */
   public interface DirectionEventListener {
     void onHeadingToNorthChanged(float heading);
-    void onBearingToCensusLocationChanged(float bearing, float heading);
-    //void onIsCompassAccuracyLow(boolean accuracyLow);
+    void onBearingToDestinationLocationChanged(float bearing, float heading);
   }
 
   public interface LocationEventListener {
@@ -169,7 +156,6 @@ public class GeoProvider implements SensorEventListener, LocationListener {
     mThrottleTime = throttleTime;
 
     mAzimuthRadians = new AverageAngle(smoothing);
-    //mLowPassFilter = new LowPassFilter();
 
     for (final String provider : mLocationManager.getProviders(true)) {
       if (LocationManager.GPS_PROVIDER.equals(provider)
@@ -422,9 +408,9 @@ public class GeoProvider implements SensorEventListener, LocationListener {
               .onHeadingToNorthChanged((float) mBearing);
 
           if (mDestinationLocation != null && this.mLocation != null) {
-            float censusBearing = getCensusBearing(this.mLocation);
-            mDirectionEventListener.onBearingToCensusLocationChanged(
-                censusBearing, (float) mBearing);
+            float destinationBearing = getDestinationBearing(this.mLocation);
+            mDirectionEventListener.onBearingToDestinationLocationChanged(
+                destinationBearing, (float) mBearing);
           }
         }
 
@@ -433,11 +419,11 @@ public class GeoProvider implements SensorEventListener, LocationListener {
     }
   }
 
-  private float getCensusBearing(Location location) {
-    float censusBearing = location.bearingTo(mDestinationLocation);
-    censusBearing = (censusBearing + 360 ) % 360;
+  private float getDestinationBearing(Location location) {
+    float destinationBearing = location.bearingTo(mDestinationLocation);
+    destinationBearing = (destinationBearing + 360 ) % 360;
 
-    return censusBearing;
+    return destinationBearing;
   }
 
   private double getBearingForLocation(Location location) {
@@ -491,5 +477,11 @@ public class GeoProvider implements SensorEventListener, LocationListener {
 
   public void setDestinationLocation(Location destinationLocation) {
     mDestinationLocation = destinationLocation;
+  }
+
+  public void clearDestinationLocation() {
+    mDestinationLocation = null;
+    mBearing = Double.NaN;
+    mLastBearing = Double.NaN;
   }
 }

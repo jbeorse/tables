@@ -7,11 +7,9 @@ import android.location.Location;
 import android.location.LocationProvider;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.View;
 import android.widget.*;
 import com.todddavies.components.progressbar.ProgressWheel;
-import org.opendatakit.activities.IOdkDataActivity;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
@@ -26,12 +24,9 @@ import org.opendatakit.tables.activities.TableDisplayActivity;
 import org.opendatakit.tables.application.Tables;
 import org.opendatakit.tables.providers.GeoProvider;
 import org.opendatakit.tables.utils.DistanceUtil;
-import org.opendatakit.tables.views.CellInfo;
 import org.opendatakit.tables.views.CompassView;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Fragment displaying the navigate module
@@ -78,7 +73,7 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   private TextView mDistanceTextView;
 
   private CompassView mCompass;
-  private CompassView mCensusLocation;
+  private CompassView mDestinationLocation;
 
   private UserTable mTable;
   private ColumnDefinition mLatitudeColumn;
@@ -100,7 +95,7 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
 
     mSignalQualitySpinner = (ProgressWheel) getActivity().findViewById(R.id.signalQualitySpinner);
     mCompass = (CompassView) getActivity().findViewById(R.id.compass);
-    mCensusLocation = (CompassView) getActivity().findViewById(R.id.destination);
+    mDestinationLocation = (CompassView) getActivity().findViewById(R.id.destination);
 
     mBearingTextView = (TextView) getActivity().findViewById(R.id.bearingTextView);
     mHeadingTextView = (TextView) getActivity().findViewById(R.id.headingTextView);
@@ -233,16 +228,16 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   }
 
   @Override
-  public void onBearingToCensusLocationChanged(float bearing, float heading) {
+  public void onBearingToDestinationLocationChanged(float bearing, float heading) {
     if (isAdded()) {
-      mCensusLocation.setVisibility(View.VISIBLE);
+
       mBearingTextView.setText(getActivity().getString(R.string.bearing,
           String.valueOf((int) (bearing)),
           mGeoProvider.getDegToGeo(bearing)));
 
       float rotation = 360 - bearing + heading;
 
-      mCensusLocation.setDegrees(rotation);
+      mDestinationLocation.setDegrees(rotation);
     }
   }
 
@@ -336,22 +331,23 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   void resetView() {
 
     if (mSelectedItemIndex == INVALID_INDEX) {
-      mGeoProvider.setDestinationLocation(null);
+      mGeoProvider.clearDestinationLocation();
       mDistanceTextView.setText(getActivity().getString(
           R.string.distance, "-"));
+      mBearingTextView.setText("");
+      mDestinationLocation.setVisibility(View.GONE);
       return;
+    } else {
+      mDestinationLocation.setVisibility(View.VISIBLE);
     }
 
     Row selectedRow = mTable.getRowAtIndex(mSelectedItemIndex);
     String lat = selectedRow.getDataByKey(mLatitudeColumn.getElementKey());
     String lon = selectedRow.getDataByKey(mLongitudeColumn.getElementKey());
 
-    Location destination = new Location(""); // TODO: Do we need a provider?
+    Location destination = new Location(TAG);
     destination.setLatitude(Double.parseDouble(lat));
     destination.setLongitude(Double.parseDouble(lon));
-
-    //destination.setAccuracy((float) census.getAccuracy());
-    //destination.setAltitude(census.getAltitude()); // TODO: Do we need/have altitude and accuracy?
 
     mGeoProvider.setDestinationLocation(destination);
     if (mGeoProvider.getCurrentLocation() != null) {
