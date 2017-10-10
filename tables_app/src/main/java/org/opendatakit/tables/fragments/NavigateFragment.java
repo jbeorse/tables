@@ -10,6 +10,7 @@ import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.widget.*;
 import com.todddavies.components.progressbar.ProgressWheel;
+import org.opendatakit.consts.IntentConsts;
 import org.opendatakit.data.utilities.TableUtil;
 import org.opendatakit.database.data.ColumnDefinition;
 import org.opendatakit.database.data.OrderedColumns;
@@ -43,6 +44,8 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
    * Represents an index that can't possibly be in the list
    */
   public static final int INVALID_INDEX = -1;
+
+  private static final String ROW_ID_KEY = "rowId";
 
   /**
    * Saves the index of the element that was selected.
@@ -78,9 +81,8 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   private UserTable mTable;
   private ColumnDefinition mLatitudeColumn;
   private ColumnDefinition mLongitudeColumn;
-  private ColumnDefinition mId;
 
-  private Button mArriveButton;
+  private boolean arrived = false;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -90,6 +92,8 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
       this.mSelectedItemIndex = savedInstanceState.containsKey(INTENT_KEY_SELECTED_INDEX) ?
           savedInstanceState.getInt(INTENT_KEY_SELECTED_INDEX) :
           INVALID_INDEX;
+
+
     }
 
     mGeoProvider = new GeoProvider(getActivity());
@@ -103,14 +107,18 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
     mBearingTextView = (TextView) getActivity().findViewById(R.id.bearingTextView);
     mHeadingTextView = (TextView) getActivity().findViewById(R.id.headingTextView);
     mDistanceTextView = (TextView) getActivity().findViewById(R.id.distanceTextView);
-    mArriveButton = (Button) getActivity().findViewById(R.id.navigate_arrive_button);
-    mArriveButton.setOnClickListener(new View.OnClickListener() {
+    Button arriveButton = (Button) getActivity().findViewById(R.id.navigate_arrive_button);
+    arriveButton.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
         arrive(v);
       }
     });
-
-
+    Button cancelButton = (Button) getActivity().findViewById(R.id.navigate_cancel_button);
+    cancelButton.setOnClickListener(new View.OnClickListener() {
+      public void onClick(View v) {
+        cancel(v);
+      }
+    });
 
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     mTable = activity.getUserTable();
@@ -127,6 +135,26 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
       WebLogger.getLogger(activity.getAppName()).printStackTrace(e);
       WebLogger.getLogger(activity.getAppName()).e(TAG, "Unable to access database");
     }
+
+    // Check for a passed in rowId to default to. Only use it if we haven't already restored a
+    // selected index
+    Bundle args = getArguments();
+    if (args != null && this.mSelectedItemIndex == INVALID_INDEX &&
+        args.containsKey(ROW_ID_KEY)) {
+      String rowId = args.getString(ROW_ID_KEY);
+      setIndexOfSelectedItem(mTable.getRowNumFromId(rowId));
+    }
+  }
+
+  public static NavigateFragment newInstance(String rowId) {
+    NavigateFragment f = new NavigateFragment();
+
+    if (rowId != null && !rowId.isEmpty()) {
+      Bundle args = new Bundle();
+      args.putString(ROW_ID_KEY, rowId);
+      f.setArguments(args);
+    }
+    return f;
   }
 
   @Override
@@ -165,10 +193,6 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
       setSpinnerColor(SignalState.POOR_SIGNAL);
       mSignalQualitySpinner.startSpinning();
     }
-
-    // TODO: Configure accuracy thresholds
-    // TODO: Configure form to launch
-    // TODO: Configure filter by place name
   }
 
   @Override
@@ -395,18 +419,6 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
     this.resetView();
   }
 
-  @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-    int arriveRowId = -1;
-    if (mSelectedItemIndex != INVALID_INDEX) {
-      mTable.getRowId(mSelectedItemIndex);
-    }
-
-    data.putExtra("nav_arrive_id", arriveRowId);
-    super.onActivityResult(requestCode, resultCode, data);
-  }
-
   private String getLatitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
 
@@ -425,6 +437,21 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   }
 
   private void arrive(View view) {
+    if (mSelectedItemIndex == INVALID_INDEX) {
+      getActivity().setResult(Activity.RESULT_CANCELED);
+      getActivity().finish();
+      return;
+    }
+
+    Intent data = new Intent();
+    data.putExtra(IntentConsts.INTENT_KEY_ROW_ID, mTable.getRowId(mSelectedItemIndex));
+
+    getActivity().setResult(Activity.RESULT_OK, data);
+    getActivity().finish();
+  }
+
+  private void cancel(View view) {
+    getActivity().setResult(Activity.RESULT_CANCELED);
     getActivity().finish();
   }
 

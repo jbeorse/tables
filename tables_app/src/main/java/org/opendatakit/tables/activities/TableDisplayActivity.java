@@ -149,6 +149,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
    */
   private UserTable mUserTable = null;
   private boolean pullFromDatabase;
+  private String mDefaultRowId;
 
   /**
    * Casts an array of objects from Parcelable to a given class that extends Parcelable..
@@ -329,6 +330,8 @@ public class TableDisplayActivity extends AbsBaseWebActivity
     Bundle args = in.getExtras();
     String queryType = IntentUtil.retrieveQueryTypeFromBundle(args);
     ResumableQuery viewDataQuery;
+
+    mDefaultRowId = IntentUtil.retrieveDefaultRowIdFromBundle(args);
 
     if (queryType == null) {
       // We are assuming this is a Simple Query if query type is unspecified. Here we are just
@@ -1121,7 +1124,7 @@ public class TableDisplayActivity extends AbsBaseWebActivity
               .d(TAG, "[showNavigateFragment] removing old navigate fragment");
           fragmentTransaction.remove(mapListViewFragment);
         }
-        navigateFragment = new NavigateFragment();
+        navigateFragment = NavigateFragment.newInstance(mDefaultRowId);
         fragmentTransaction
             .add(R.id.navigate, navigateFragment, Constants.FragmentTags.NAVIGATE);
       } else {

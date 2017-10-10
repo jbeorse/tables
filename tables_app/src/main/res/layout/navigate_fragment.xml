@@ -102,16 +102,33 @@
                         android:textSize="@dimen/nav_text_size_small"
                         android:textStyle="bold"/>
             </LinearLayout>
+
+
+        </RelativeLayout>
+        <RelativeLayout
+                android:id="@+id/navigate_button_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/gpsContainer"
+                android:layout_marginTop="10dp"
+                android:layout_toRightOf="@id/compassContainer">
+            <Button
+                    android:id="@+id/navigate_arrive_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/navigate_arrive_button"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentStart="true"/>
+            <Button
+                    android:id="@+id/navigate_cancel_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/navigate_cancel_button"
+                    android:layout_alignParentTop="true"
+                    android:layout_toEndOf="@+id/navigate_arrive_button"/>
         </RelativeLayout>
 
-        <Button
-                android:id="@+id/navigate_arrive_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/navigate_arrive_button"
-                android:layout_below="@+id/gpsContainer"
-                android:layout_toEndOf="@+id/compassContainer"
-                />
+
     </RelativeLayout>
 
     <LinearLayout
