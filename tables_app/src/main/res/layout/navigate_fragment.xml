@@ -10,58 +10,59 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/item_background_state"
-            android:padding="10dp" >
+            android:padding="10dp">
 
-    <FrameLayout
-            android:id="@+id/compassContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:paddingRight="10dp" >
-
-        <org.opendatakit.tables.views.CompassView
-                android:id="@+id/compass"
-                android:layout_width="@dimen/compass_width"
-                android:layout_height="@dimen/compass_height"
-                android:src="@drawable/compass" />
-
-        <org.opendatakit.tables.views.CompassView
-                android:id="@+id/destination"
-                android:layout_width="@dimen/compass_width"
-                android:layout_height="@dimen/compass_height"
-                android:src="@drawable/census_bearing"
-                android:visibility="gone" />
-
-        <org.opendatakit.tables.views.CompassView
-                android:layout_width="@dimen/compass_width"
-                android:layout_height="@dimen/compass_height"
-                android:src="@drawable/compass_heading" />
-    </FrameLayout>
-
-    <LinearLayout
-            android:id="@+id/distanceContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/compassContainer"
-            android:orientation="vertical" >
-
-        <TextView
-                android:id="@+id/distanceTextView"
+        <FrameLayout
+                android:id="@+id/compassContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/dark_blue"
-                android:textSize="@dimen/nav_text_size"
-                android:textStyle="bold" />
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:paddingRight="10dp">
 
-    </LinearLayout>
+            <org.opendatakit.tables.views.CompassView
+                    android:id="@+id/compass"
+                    android:layout_width="@dimen/compass_width"
+                    android:layout_height="@dimen/compass_height"
+                    android:src="@drawable/compass"/>
+
+            <org.opendatakit.tables.views.CompassView
+                    android:id="@+id/destination"
+                    android:layout_width="@dimen/compass_width"
+                    android:layout_height="@dimen/compass_height"
+                    android:src="@drawable/census_bearing"
+                    android:visibility="gone"/>
+
+            <org.opendatakit.tables.views.CompassView
+                    android:layout_width="@dimen/compass_width"
+                    android:layout_height="@dimen/compass_height"
+                    android:src="@drawable/compass_heading"/>
+        </FrameLayout>
+
+        <LinearLayout
+                android:id="@+id/distanceContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/compassContainer"
+                android:orientation="vertical">
+
+            <TextView
+                    android:id="@+id/distanceTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/dark_blue"
+                    android:textSize="@dimen/nav_text_size"
+                    android:textStyle="bold"/>
+
+        </LinearLayout>
+
         <RelativeLayout
                 android:id="@+id/gpsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/distanceContainer"
                 android:layout_marginTop="10dp"
-                android:layout_toRightOf="@id/compassContainer" >
+                android:layout_toRightOf="@id/compassContainer">
 
 
             <com.todddavies.components.progressbar.ProgressWheel
@@ -75,7 +76,7 @@
                     ProgressWheel:pwRimWidth="@dimen/progress_wheel_rim_width"
                     ProgressWheel:pwText="@string/acc_value"
                     ProgressWheel:pwTextColor="@color/progress_wheel_text"
-                    ProgressWheel:pwTextSize="@dimen/small_signal_quality_progress_wheel_text_size" />
+                    ProgressWheel:pwTextSize="@dimen/small_signal_quality_progress_wheel_text_size"/>
 
             <LinearLayout
                     android:id="@+id/directionContainer"
@@ -83,7 +84,7 @@
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
                     android:layout_toRightOf="@id/signalQualitySpinner"
-                    android:orientation="vertical" >
+                    android:orientation="vertical">
 
                 <TextView
                         android:id="@+id/headingTextView"
@@ -91,7 +92,7 @@
                         android:layout_height="wrap_content"
                         android:textColor="@color/dark_blue"
                         android:textSize="@dimen/nav_text_size_small"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"/>
 
                 <TextView
                         android:id="@+id/bearingTextView"
@@ -99,9 +100,18 @@
                         android:layout_height="wrap_content"
                         android:textColor="@color/dark_blue"
                         android:textSize="@dimen/nav_text_size_small"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"/>
             </LinearLayout>
         </RelativeLayout>
+
+        <Button
+                android:id="@+id/navigate_arrive_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/navigate_arrive_button"
+                android:layout_below="@+id/gpsContainer"
+                android:layout_toEndOf="@+id/compassContainer"
+                />
     </RelativeLayout>
 
     <LinearLayout

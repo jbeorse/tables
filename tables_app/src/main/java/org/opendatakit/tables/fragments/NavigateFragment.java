@@ -78,6 +78,9 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   private UserTable mTable;
   private ColumnDefinition mLatitudeColumn;
   private ColumnDefinition mLongitudeColumn;
+  private ColumnDefinition mId;
+
+  private Button mArriveButton;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -100,6 +103,14 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
     mBearingTextView = (TextView) getActivity().findViewById(R.id.bearingTextView);
     mHeadingTextView = (TextView) getActivity().findViewById(R.id.headingTextView);
     mDistanceTextView = (TextView) getActivity().findViewById(R.id.distanceTextView);
+    mArriveButton = (Button) getActivity().findViewById(R.id.navigate_arrive_button);
+    mArriveButton.setOnClickListener(new View.OnClickListener() {
+      public void onClick(View v) {
+        arrive(v);
+      }
+    });
+
+
 
     TableDisplayActivity activity = (TableDisplayActivity) getActivity();
     mTable = activity.getUserTable();
@@ -387,7 +398,13 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-    // TODO: Return which row ID we navigated to
+    int arriveRowId = -1;
+    if (mSelectedItemIndex != INVALID_INDEX) {
+      mTable.getRowId(mSelectedItemIndex);
+    }
+
+    data.putExtra("nav_arrive_id", arriveRowId);
+    super.onActivityResult(requestCode, resultCode, data);
   }
 
   private String getLatitudeElementKey(DbHandle dbHandle) throws ServicesAvailabilityException {
@@ -405,6 +422,10 @@ public class NavigateFragment extends Fragment implements IMapListViewCallbacks,
     return TableUtil.get()
         .getMapListViewLongitudeElementKey(Tables.getInstance().getDatabase(),
             activity.getAppName(), dbHandle, activity.getTableId(), orderedDefns);
+  }
+
+  private void arrive(View view) {
+    getActivity().finish();
   }
 
 }

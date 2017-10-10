@@ -440,4 +440,5 @@
     <string name="meter_shorthand">m</string>
     <string name="bearing">Bearing: %1$s° %2$s</string>
     <string name="heading">Heading: %1$s° %2$s</string>
+    <string name="navigate_arrive_button">Arrive</string>
 </resources>
